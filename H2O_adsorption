@@ -1,0 +1,50 @@
+Parameter
+cm as real default 2.56804
+cG1 as real default 1.683
+cG2 as real default -6255.469
+cG3 as real default 0.972
+Kads1 as real default 0.671
+Kads2 as real default -363172000
+Kads3 as real default 0.925
+
+Variable
+T_ambient as temperature
+x_ambient as temperature
+cG_ambient as notype
+Kads_ambient as notype
+q_ambient as adsorption_capacity
+T_sol as temperature
+cG as notype
+Kads as notype
+p as pressure
+ps as pressure
+x as relative_humidity
+qe as adsorption_capacity
+q as adsorption_capacity
+k_ads as mass_transfer_coefficient
+k_des as mass_transfer_coefficient
+r as reaction_rate
+
+Equation
+cG_ambient=cG1-cG2*cG3^T_ambient;
+Kads_ambient=Kads1-Kads2*Kads3^T_ambient;
+q_ambient=cm*cG_ambient*Kads_ambient*x_ambient/(1-Kads_ambient*x_ambient)/(1+(cG_ambient-1)*Kads_ambient*x_ambient);
+ps=exp(23.196-3816.44/(T_sol-46.13)); #Antonie correlation
+x=p/ps;
+cG=cG1-cG2*cG3^T_sol;
+Kads=Kads1-Kads2*Kads3^T_sol;
+qe=cm*cG*Kads*x/(1-Kads*x)/(1+(cG-1)*Kads*x);
+if qe<q then
+r=k_des*(qe-q);
+else
+r=k_ads*(qe-q);
+end # if
+$q=r;
+
+Assign
+k_ads:=0.00153; #0.0022; 
+k_des:=0.00664; #0.0144; 
+
+Initial
+q=q_ambient;
+
