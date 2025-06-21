@@ -1,0 +1,511 @@
+Parameter
+phys_prop as foreign_object #multiflash file
+nocomp as ordered_set #1:CO2,2:N2,3:O2,4:H2O
+
+#constant
+R as real default 8.3145 #ideal gas constant [J/mol/K]
+pi as real default 3.14159
+
+#bed parameter
+t_0 as real
+L as real #rotor thickness (channel length) [m]
+a as real #half channel height [m]
+b as real #half channel width [m]
+f_gas as real #gas flow area fraction [-]
+Peri as real #channel perimeter [m]
+S_gas as real #channel gas flow area [m2]
+S_total as real #channnel total area [m2]
+Req as real #equivalent channel inner diameter [m]
+m_ads as real #adsorbent mass [kg]
+As1 as real #specific surface area of the gas [m]
+As2 as real #specific surface area of the adsorbent [m]
+
+#temperature related physical parameter
+rho_air as real #air density [kg/m3]
+rho_steam as real #steam density [kg/m3]
+cp_air as real #air heat capacity [J/kg/K]
+cp_steam as real #steam heat capacity [J/kg/K]
+lambda_air as real #air heat conductivity [W/m/K]
+lambda_steam as real #steam heat conductivity [W/m/K]
+mu_air as real #air viscossity [Pa s]
+mu_steam as real #steam viscossity [Pa s]
+enthalpy_water as real #water enthalpy [J/mol]
+enthalpy_steam as real #steam enthalpy [J/mol]
+
+#constant physical parameter
+rho_ads as real #adsorbent density [kg/m3]
+cp_ads as real #adsorbent heat capacity [J/kg/K]
+lambda_ads as real #adsorbent heat conductivity [W/m/K]
+h as real #convective heat transfer coefficient [W/m2/K]
+H_CO2 as real #CO2 adsorption heat [J/mol]
+H_H2O as real #H2O adsorption heat [J/mol]
+L_H2O as real #H2O latent heat [J/mol]
+D as array(nocomp) of real #diffusivity of the component i in the channel [m2/s]
+molecular_weight as array(nocomp) of real # [kg/mol]
+k_condense as real #condense mass transfer coefficient [1/s]
+
+#operating condition
+T_ambient as real #ambient temperature [K]
+p_ambient as real #ambient pressure [Pa]
+x_ambient as array(nocomp) of real #ambient air composition [-]
+T_air as real #inlet air temperature [K]
+p_air as real #inlet air pressure [Pa]
+x_air as array(nocomp) of real #inlet air composition [-]
+v_air as real #air velocity [m/s]
+T_steam as real #steam temperature [K]
+p_steam as real #steam pressure [Pa]
+x_steam as array(nocomp) of real #steam composition
+v_steam as real #steam velocity [m/s]
+Time_adsorption as real #[s]
+Time_desorption as real #[s]
+n_rot as real #rotor rotation speed [r/min]
+Tq as real #motor torque [N m]
+
+#other coefficient
+impurity_correction as real # impurity correction coefficient [-]
+efficiency_thermal_to_electric as real # coefficient to transform thermal energy to electrical energy [-]
+sto_CO2 as array(nocomp) of integer # CO2 reaction stoichiometry [-]
+sto_H2O as array(nocomp) of integer # water reaction stoichiometry [-]
+num_disp_point as integer #number of dispersed point
+
+Distribution_domain
+axial as [0:L]
+shiftaxial as [0:L]
+
+Unit
+CO2_model as array(num_disp_point+1) of CO2_adsorption
+H2O_model as array(num_disp_point+1) of H2O_adsorption
+
+Variable
+mytime as time_s
+
+#variable associated with spatial position
+p as distribution(shiftaxial) of pressure #gas total pressure [Pa]
+C as distribution(nocomp,axial) of concentration #gas molar concentration of component i [mol/m3]
+Cs_H2O as distribution(axial) of concentration #water vapor saturation concentration [mol/m3]
+T_gas as distribution(axial) of temperature #gas temperature [K]
+T_sol as distribution(axial) of temperature #solid adsorbent temperature [K]
+cp_gas as distribution(axial) of heat_capacity #gas heat capacity [J/kg/K]
+rho_gas as distribution(axial) of density #gas density [kg/m3]
+lambda_gas as distribution(axial) of thermal_conductivity #gas thermal conductivity [W/m/K]
+mu_gas as distribution(axial) of viscosity #gas viscossity [Pa s]
+molar_fraction as distribution(nocomp,axial) of molar_fraction #gas molar fraction
+v as distribution(axial) of velocity #gas velocity [m/s]
+v_temperature as distribution(axial) of velocity #fake velocity to calculate temperature [m/s]
+r_CO2 as distribution(axial) of reaction_rate #CO2 reaction rate in kinetic model
+r_H2O as distribution(axial) of reaction_rate #H2O reaction rate in kinetic model
+r_condense as distribution(axial) of condense_rate #H2O condense rate
+judge as distribution(axial) of notype #judge factor
+cum_water as distribution(axial) of concentration #accumulated liquid water
+
+#variable with spatially reversed distribution
+p_rev as distribution(shiftaxial) of pressure #gas total pressure [Pa]
+C_rev as distribution(nocomp,axial) of concentration #gas molar concentration of component i [mol/m3]
+Cs_H2O_rev as distribution(axial) of concentration #water vapor saturation concentration [mol/m3]
+T_gas_rev as distribution(axial) of temperature #gas temperature [K]
+T_sol_rev as distribution(axial) of temperature #solid adsorbent temperature [K]
+cp_gas_rev as distribution(axial) of heat_capacity #gas heat capacity [J/kg/K]
+rho_gas_rev as distribution(axial) of density #gas density [kg/m3]
+lambda_gas_rev as distribution(axial) of thermal_conductivity #gas thermal conductivity [W/m/K]
+mu_gas_rev as distribution(axial) of viscosity #gas viscossity [Pa s]
+molar_fraction_rev as distribution(nocomp,axial) of molar_fraction #gas molar fraction
+v_rev as distribution(axial) of velocity #gas velocity [m/s]
+ 
+r_CO2_rev as distribution(axial) of reaction_rate #CO2 reaction rate in kinetic model
+r_H2O_rev as distribution(axial) of reaction_rate #H2O reaction rate in kinetic model
+r_condense_rev as distribution(axial) of condense_rate #H2O condense rate
+judge_rev as distribution(axial) of notype #judge factor
+cum_water_rev as distribution(axial) of concentration #accumulated liquid water
+
+inlet_steam_molar_flow_rate as array(nocomp) of molar_flow_rate #[mol/s]
+inlet_steam_molar_amount as array(nocomp) of molar #[mol]
+inlet_air_molar_flow_rate as array(nocomp) of molar_flow_rate #[mol/s]
+inlet_air_molar_amount as array(nocomp) of molar #[mol]
+inlet_molar_amount as array(nocomp) of molar #[mol]
+outlet_desorption_molar_flow_rate as array(nocomp) of molar_flow_rate #[mol/s]
+outlet_desorption_molar_amount as array(nocomp) of molar #[mol]
+outlet_treated_molar_flow_rate as array(nocomp) of molar_flow_rate #[mol/s]
+outlet_treated_molar_amount as array(nocomp) of molar #[mol]
+outlet_molar_amount as array(nocomp) of molar #[mol]
+
+average_CO2_uptake as adsorption_capacity #channnel average CO2 uptake [mol/kg]
+average_H2O_uptake as adsorption_capacity #channnel average H2O uptake [mol/kg]
+average_CO2_uptake_modified as adsorption_capacity
+average_H2O_uptake_modified as adsorption_capacity
+
+carbon_capture_rate as notype #CO2 carbon_capture_rate [-]
+carbon_purity as notype #CO2 product purity [-]
+carbon_productivity as productivity #CO2 productivity [kg/kg/day]
+carbon_productivity_vol as productivity_vol #CO2 productivity per volume [kg/m3/h]
+
+power_blower as power #blower power [W]
+energy_blower as energy #blower energy consumption [J]
+E_blower as unit_energy #blower specific energy consumption [MJ/kg]
+power_motor as power #motor power [W]
+energy_motor as energy #motor energy consumption [J]
+E_motor as unit_energy #motor specific energy consumption [MJ/kg]
+E_steam as unit_energy #steam specific energy consumption [MJ/kg]
+
+Selector
+TSA_process as (desorption,adsorption) default desorption
+
+Set
+nocomp:=phys_prop.components;
+S_gas:=f_gas*S_total;
+S_total:=2*a*b;
+Peri:=2*b+2*sqrt(b^2+(a*pi)^2)*(3+(2*b/a/pi)^2)/(4+(2*b/a/pi)^2);
+Req:=2*S_gas/Peri;
+m_ads:=(S_total-S_gas)*L*rho_ads;
+As1:=S_gas/Peri;
+As2:=(S_total-S_gas)/Peri;
+sto_CO2:=[1,0,0,0];
+sto_H2O:=[0,0,0,1];
+
+axial:=[BFDM,1,num_disp_point];
+shiftaxial:=[FFDM,1,num_disp_point];
+
+molecular_weight:=phys_prop.MolecularWeight/1000;
+rho_air:=phys_prop.Density(T_air,p_air,x_air());
+rho_steam:=phys_prop.Density(T_steam,p_steam,x_steam());
+cp_air:=phys_prop.HeatCapacity(T_air,p_air,x_air())/sigma(x_air()*molecular_weight());
+cp_steam:=phys_prop.HeatCapacity(T_steam,p_steam,x_steam())/sigma(x_steam()*molecular_weight());
+lambda_air:=phys_prop.VapourThermalConductivity(T_air,p_air,x_air());
+lambda_steam:=phys_prop.VapourThermalConductivity(T_steam,p_steam,x_steam());
+mu_air:=phys_prop.VapourViscosity(T_air,p_air,x_air());
+mu_steam:=phys_prop.VapourViscosity(T_steam,p_steam,x_steam());
+enthalpy_water:=phys_prop.Enthalpy(T_ambient,p_ambient,x_steam)/sigma(x_steam()*molecular_weight());
+enthalpy_steam:=phys_prop.Enthalpy(T_steam,p_steam,x_steam)/sigma(x_steam()*molecular_weight());
+
+Boundary
+case TSA_process of
+  when desorption:
+    #@z=0
+    for i in nocomp do
+      D(i)*sigma(C(,0))*partial(molar_fraction(i,0),axial)=v(0)*C(i,0)-v_steam*p_steam/R/T_steam*x_steam(i);
+    end #for i
+    v(0)*p(0)/T_gas(0)=v_steam*p_steam/T_steam;
+    partial(p(0),shiftaxial)=-8*mu_steam*v(0)/Req^2;
+    lambda_steam*partial(T_gas(0),axial)=rho_steam*cp_steam*v(0)*T_gas(0)-rho_steam*cp_steam*v_steam*T_steam;
+    partial(T_sol(0),axial)=0;
+
+    #@z=L
+    for i in nocomp do
+      partial(C(i,L),axial)=0;
+    end #for i
+    if p(L)<p_steam then
+      v(L)=0;
+    else
+      partial(v(L),axial)=0;
+    end
+    if p(L)<p_steam then
+      partial(p(L),shiftaxial)=-8*mu_steam*v(L)/Req^2;
+    else
+      p(L)=p_steam;
+    end
+    partial(T_gas(L),axial)=0;
+    partial(T_sol(L),axial)=0;
+
+  when adsorption:
+    #@z=0
+    for i in nocomp do
+      D(i)*sigma(C_rev(,0))*partial(molar_fraction_rev(i,0),axial)=v_rev(0)*C_rev(i,0)-v_air*p_air/R/T_air*x_air(i);
+    end #for i
+    v_rev(0)=v_air;
+    partial(p_rev(0),shiftaxial)=-8*mu_air*v_rev(0)/Req^2;
+    T_gas_rev(0)=T_air;
+    partial(T_sol_rev(0),axial)=0;
+
+    #@z=L
+    for i in nocomp do
+      partial(C_rev(i,L),axial)=0;
+    end #for i
+    if p_rev(L)<p_air then
+      v_rev(L)=0;
+    else
+      partial(v_rev(L),axial)=0;
+    end
+    if p_rev(L)<p_air then
+      partial(p_rev(L),shiftaxial)=-8*mu_air*v_rev(L)/Req^2;
+    else
+      p_rev(L)=p_air;
+    end
+    partial(T_gas_rev(L),axial)=0;
+    partial(T_sol_rev(L),axial)=0;
+end #case
+
+Equation
+$mytime=1;
+
+for z:=0 to L do #to obtain the variables with reversed values
+  T_gas_rev(z)=T_gas(num_disp_point+2-z);
+  T_sol_rev(z)=T_sol(num_disp_point+2-z);
+  C_rev(,z)=C(,num_disp_point+2-z);
+  Cs_H2O_rev(z)=Cs_H2O(num_disp_point+2-z);
+  p_rev(z)=p(num_disp_point+2-z);
+  cp_gas_rev(z)=cp_gas(num_disp_point+2-z);
+  lambda_gas_rev(z)=lambda_gas(num_disp_point+2-z);
+  mu_gas_rev(z)=mu_gas(num_disp_point+2-z);
+  rho_gas_rev(z)=rho_gas(num_disp_point+2-z);
+  molar_fraction_rev(,z)=molar_fraction(,num_disp_point+2-z);
+  v_rev(z)=v(num_disp_point+2-z);
+ 
+  r_CO2_rev(z)=r_CO2(num_disp_point+2-z);
+  r_H2O_rev(z)=r_H2O(num_disp_point+2-z);
+  r_condense_rev(z)=r_condense(num_disp_point+2-z);
+  judge_rev(z)=judge(num_disp_point+2-z);
+  cum_water_rev(z)=cum_water(num_disp_point+2-z);
+end
+
+#the gas flow direction is opposite during adsorption and desorption, so here two cases are set
+case TSA_process of
+  when desorption:
+    #physical properties
+    for z:=0 to L do
+      cp_gas(z)=phys_prop.HeatCapacity(abs(T_gas(z)),p(z),molar_fraction(,z))/(sigma(molar_fraction(,z)*molecular_weight()));
+      lambda_gas(z)=phys_prop.VapourThermalConductivity(abs(T_gas(z)),p(z),molar_fraction(,z));
+      mu_gas(z)=phys_prop.VapourViscosity(abs(T_gas(z)),p(z),molar_fraction(,z));
+      rho_gas(z)=phys_prop.Density(abs(T_gas(z)),p(z),molar_fraction(,z));
+    end #for z
+
+    for i in nocomp do
+      for z:=0 to L do
+        molar_fraction(i,z)=C(i,z)/sigma(C(,z));
+      end #for z
+    end #for i
+
+    #ideal gas equation
+    for z:=0|+ to L|- do
+      p(z)=sigma(C(,z))*R*T_gas(z);
+    end #for z
+
+    #Hagen-Poiseuille equation
+    for z:=0|+ to L|- do
+      v(z)=-Req^2/8/mu_gas(z)*partial(p(z),shiftaxial);
+    end #for z
+
+    #reaction rate
+    CO2_model().p_ambient=p_ambient*x_ambient('CARBON DIOXIDE');
+    CO2_model().T_ambient=T_ambient;
+    CO2_model().RH_ambient=min(p_ambient*x_ambient('WATER'), 10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28)/(10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28);
+    CO2_model().T_sol=T_sol();
+    CO2_model().p=C('CARBON DIOXIDE',)*R*T_gas();
+    CO2_model().p_H2O=min(C('WATER',)*R*T_gas(), 10^(8.07131-1730.63/(233.426+T_gas()-273.15))*133.28);
+    r_CO2()=CO2_model().r;
+    H2O_model().T_ambient=T_ambient;
+    H2O_model().x_ambient=min(p_ambient*x_ambient('WATER'), 10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28)/(10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28);
+    H2O_model().T_sol=T_sol();
+    H2O_model().p=min(C('WATER',)*R*T_gas(), 10^(8.07131-1730.63/(233.426+T_gas()-273.15))*133.28);
+    r_H2O()=H2O_model().r;
+
+    Cs_H2O()=(10^(8.07131-1730.63/(233.426+T_gas()-273.15))*133.28)/R/T_gas();
+    r_condense()=k_condense*(C('WATER',)-Cs_H2O());
+
+    #mass balance
+    for i in nocomp do
+      for z:=0|+ to L|- do
+        $C(i,z)=As2/As1*D(i)*partial(sigma(C(,z))*partial(molar_fraction(i,z),axial),axial)-partial(v(z)*C(i,z),axial)-As2/As1*rho_ads*(sto_CO2(i)*r_CO2(z)+sto_H2O(i)*r_H2O(z))-As2/As1*sto_H2O(i)*judge(z)*r_condense(z);
+      end #for z
+    end #for i
+
+    #energy balance
+    for z:=0|+ to L|- do
+      rho_gas(z)*cp_gas(z)*$T_gas(z)=lambda_gas(z)*partial(T_gas(z),axial,axial)-rho_gas(z)*cp_gas(z)*partial(v_temperature(z)*T_gas(z),axial)+h/As1*(T_sol(z)-T_gas(z));
+      rho_ads*cp_ads*$T_sol(z)=lambda_ads*partial(T_sol(z),axial,axial)+h/As2*(T_gas(z)-T_sol(z))+rho_ads*(H_CO2*r_CO2(z)+H_H2O*r_H2O(z))+L_H2O*judge(z)*r_condense(z);
+    end #for z
+
+    for z:=0 to L do # judge if condensation will occur
+      if C('WATER',z)>Cs_H2O(z) then
+        judge(z)=1;
+      else
+        if cum_water(z)>0 then # if there is accumulated liquid water, evaporation will occur, else evaporation won't occur
+          judge(z)=1;
+        else
+          judge(z)=0;
+        end
+      end
+    end
+
+    for z:=0 to L do
+      if C('WATER',z)>Cs_H2O(z) then # when condensation occurs, liquid water accumulates
+        $cum_water(z)=r_condense(z);
+      else
+        if cum_water(z)>0 then
+          $cum_water(z)=r_condense(z);
+        else
+          $cum_water(z)=0;
+        end
+      end
+    end
+
+    for i in nocomp do
+      inlet_air_molar_flow_rate(i)=0;
+      inlet_steam_molar_flow_rate(i)=v_steam*S_gas*p_steam/R/T_steam*x_steam(i);#v_steam*pi*Req^2*p_steam/R/T_steam*x_steam(i);
+      outlet_treated_molar_flow_rate(i)=0;
+      outlet_desorption_molar_flow_rate(i)=v(L)*S_gas*abs(C(i,L));#v(L)*pi*Req^2*abs(C(i,L));
+    end #for i
+    power_blower=0;
+    power_motor=2*pi*n_rot*Tq/60*1000;
+
+    for i in nocomp do
+      $inlet_air_molar_amount(i)=inlet_air_molar_flow_rate(i);
+      $inlet_steam_molar_amount(i)=inlet_steam_molar_flow_rate(i);
+      $outlet_treated_molar_amount(i)=outlet_treated_molar_flow_rate(i);
+      $outlet_desorption_molar_amount(i)=outlet_desorption_molar_flow_rate(i);
+      inlet_molar_amount(i)=inlet_air_molar_amount(i)+inlet_steam_molar_amount(i);
+      outlet_molar_amount(i)=outlet_treated_molar_amount(i)+outlet_desorption_molar_amount(i);
+    end #for i
+
+    #indicator
+    average_CO2_uptake=sigma(CO2_model().q)/(num_disp_point+1);
+    average_H2O_uptake=sigma(H2O_model().q)/(num_disp_point+1);
+    average_CO2_uptake_modified=(inlet_molar_amount('CARBON DIOXIDE')-outlet_molar_amount('CARBON DIOXIDE'))/m_ads;#(inlet_steam_molar_amount('CARBON DIOXIDE')-outlet_desorption_molar_amount('CARBON DIOXIDE'))/m_ads;
+    average_H2O_uptake_modified=(inlet_molar_amount('WATER')-outlet_molar_amount('WATER'))/m_ads;#(inlet_steam_molar_amount('WATER')-outlet_desorption_molar_amount('WATER'))/m_ads;
+
+    carbon_capture_rate=0;
+    carbon_purity=outlet_desorption_molar_amount('CARBON DIOXIDE')/(outlet_desorption_molar_amount('CARBON DIOXIDE')+(outlet_desorption_molar_amount('NITROGEN')+outlet_desorption_molar_amount('OXYGEN'))*impurity_correction);
+    carbon_productivity=outlet_desorption_molar_amount('CARBON DIOXIDE')/m_ads/(0.1+mytime)*60*60*24*0.044; #[kg/kg/day]
+    carbon_productivity_vol=outlet_desorption_molar_amount('CARBON DIOXIDE')/(S_total*L)/(0.1+mytime)*60*60*0.044; #[kg/m3/h]
+
+    $energy_blower=power_blower;
+    $energy_motor=power_motor;
+    E_blower=energy_blower/(1e-6+outlet_desorption_molar_amount('CARBON DIOXIDE'))/1E6/0.044; #[MJ/kg]
+    E_motor=energy_motor/(1e-6+outlet_desorption_molar_amount('CARBON DIOXIDE'))/1E6/0.044; #[MJ/kg]
+    E_steam=efficiency_thermal_to_electric*molecular_weight('WATER')*(enthalpy_steam-enthalpy_water)*inlet_steam_molar_amount('WATER')/(1e-6+outlet_desorption_molar_amount('CARBON DIOXIDE'))/1E6/0.044;
+
+  when adsorption:
+  #physical properties
+    for z:=0 to L do
+      cp_gas_rev(z)=phys_prop.HeatCapacity(abs(T_gas_rev(z)),p_rev(z),molar_fraction_rev(,z))/(sigma(molar_fraction_rev(,z)*molecular_weight()));
+      lambda_gas_rev(z)=phys_prop.VapourThermalConductivity(abs(T_gas_rev(z)),p_rev(z),molar_fraction_rev(,z));
+      mu_gas_rev(z)=phys_prop.VapourViscosity(abs(T_gas_rev(z)),p_rev(z),molar_fraction_rev(,z));
+      rho_gas_rev(z)=phys_prop.Density(abs(T_gas_rev(z)),p_rev(z),molar_fraction_rev(,z));
+    end #for z
+
+    for i in nocomp do
+      for z:=0 to L do
+        molar_fraction_rev(i,z)=C_rev(i,z)/sigma(C_rev(,z));
+      end #for z
+    end #for i
+
+    #ideal gas equation
+    for z:=0|+ to L|- do
+      p(z)=sigma(C_rev(,z))*R*T_gas_rev(z);
+    end #for z
+
+    #Hagen-Poiseuille equation
+    for z:=0|+ to L|- do
+      v(z)=-Req^2/8/mu_gas_rev(z)*partial(p_rev(z),shiftaxial);
+    end #for z
+
+    #reaction rate
+    CO2_model().p_ambient=p_ambient*x_ambient('CARBON DIOXIDE');
+    CO2_model().T_ambient=T_ambient;
+    CO2_model().RH_ambient=min(p_ambient*x_ambient('WATER'), 10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28)/(10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28);
+    CO2_model().T_sol=T_sol();
+    CO2_model().p=C('CARBON DIOXIDE',)*R*T_gas();
+    CO2_model().p_H2O=min(C('WATER',)*R*T_gas(), 10^(8.07131-1730.63/(233.426+T_gas()-273.15))*133.28);
+    r_CO2()=CO2_model().r;
+    H2O_model().T_ambient=T_ambient;
+    H2O_model().x_ambient=min(p_ambient*x_ambient('WATER'), 10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28)/(10^(8.07131-1730.63/(233.426+T_ambient-273.15))*133.28);
+    H2O_model().T_sol=T_sol();
+    H2O_model().p=min(C('WATER',)*R*T_gas(), 10^(8.07131-1730.63/(233.426+T_gas()-273.15))*133.28);
+    r_H2O()=H2O_model().r;
+
+    Cs_H2O()=(10^(8.07131-1730.63/(233.426+T_gas()-273.15))*133.28)/R/T_gas();
+    r_condense()=k_condense*(C('WATER',)-Cs_H2O());
+
+    #mass balance
+    for i in nocomp do
+      for z:=0|+ to L|- do
+        $C_rev(i,z)=As2/As1*D(i)*partial(sigma(C_rev(,z))*partial(molar_fraction_rev(i,z),axial),axial)-partial(v_rev(z)*C_rev(i,z),axial)-As2/As1*rho_ads*(sto_CO2(i)*r_CO2_rev(z)+sto_H2O(i)*r_H2O_rev(z))-As2/As1*sto_H2O(i)*judge_rev(z)*r_condense_rev(z);
+      end #for z
+    end #for i
+
+    #energy balance
+    for z:=0|+ to L|- do
+      rho_gas_rev(z)*cp_gas_rev(z)*$T_gas_rev(z)=lambda_gas_rev(z)*partial(T_gas_rev(z),axial,axial)-rho_gas_rev(z)*cp_gas_rev(z)*partial(v_rev(z)*T_gas_rev(z),axial)+h/As1*(T_sol_rev(z)-T_gas_rev(z));
+      rho_ads*cp_ads*$T_sol_rev(z)=lambda_ads*partial(T_sol_rev(z),axial,axial)+h/As2*(T_gas_rev(z)-T_sol_rev(z))+rho_ads*(H_CO2*r_CO2_rev(z)+H_H2O*r_H2O_rev(z))+L_H2O*judge_rev(z)*r_condense_rev(z);
+    end #for z
+
+    for z:=0 to L do # judge if condensation will occur
+      if C_rev('WATER',z)>Cs_H2O_rev(z) then
+        judge_rev(z)=1;
+      else
+        if cum_water_rev(z)>0 then # if there is accumulated liquid water, evaporation will occur, else evaporation won't occur
+          judge_rev(z)=1;
+        else
+          judge_rev(z)=0;
+        end
+      end
+    end
+
+    for z:=0 to L do
+      if C_rev('WATER',z)>Cs_H2O_rev(z) then # when condensation occurs, liquid water accumulates
+        $cum_water_rev(z)=r_condense_rev(z);
+      else
+        if cum_water_rev(z)>0 then
+          $cum_water_rev(z)=r_condense_rev(z);
+        else
+          $cum_water_rev(z)=0;
+        end
+      end
+    end
+
+    for i in nocomp do
+      inlet_air_molar_flow_rate(i)=v_air*S_gas*p_air/R/T_air*x_air(i);#v_air*pi*Req^2*p_air/R/T_air*x_air(i);
+      inlet_steam_molar_flow_rate(i)=0;
+      outlet_treated_molar_flow_rate(i)=v_air*S_gas*abs(C_rev(i,L));#v(L)*pi*Req^2*abs(C_rev(i,L));
+      outlet_desorption_molar_flow_rate(i)=0;
+    end #for i
+    power_blower=8*L*mu_air*v_air^2*pi*2.5;
+    power_motor=2*pi*n_rot*Tq/60*1000;
+
+    for i in nocomp do
+      $inlet_air_molar_amount(i)=inlet_air_molar_flow_rate(i);
+      $inlet_steam_molar_amount(i)=inlet_steam_molar_flow_rate(i);
+      $outlet_treated_molar_amount(i)=outlet_treated_molar_flow_rate(i);
+      $outlet_desorption_molar_amount(i)=outlet_desorption_molar_flow_rate(i);
+      inlet_molar_amount(i)=inlet_air_molar_amount(i)+inlet_steam_molar_amount(i);
+      outlet_molar_amount(i)=outlet_treated_molar_amount(i)+outlet_desorption_molar_amount(i);
+    end #for i
+
+    #indicator
+    average_CO2_uptake=sigma(CO2_model().q)/(num_disp_point+1);
+    average_H2O_uptake=sigma(H2O_model().q)/(num_disp_point+1);
+    average_CO2_uptake_modified=(inlet_molar_amount('CARBON DIOXIDE')-outlet_molar_amount('CARBON DIOXIDE'))/m_ads;#(inlet_air_molar_amount('CARBON DIOXIDE')-outlet_treated_molar_amount('CARBON DIOXIDE'))/m_ads;
+    average_H2O_uptake_modified=(inlet_molar_amount('WATER')-outlet_molar_amount('WATER'))/m_ads;#(inlet_air_molar_amount('WATER')-outlet_treated_molar_amount('WATER'))/m_ads;
+
+    carbon_capture_rate=(C_rev('CARBON DIOXIDE',0)-min(max(C_rev('CARBON DIOXIDE',L),1e-8),C_rev('CARBON DIOXIDE',0)))/(C_rev('CARBON DIOXIDE',0));
+    carbon_purity=outlet_desorption_molar_amount('CARBON DIOXIDE')/(outlet_desorption_molar_amount('CARBON DIOXIDE')+(outlet_desorption_molar_amount('NITROGEN')+outlet_desorption_molar_amount('OXYGEN'))*impurity_correction);
+    carbon_productivity=outlet_desorption_molar_amount('CARBON DIOXIDE')/m_ads/(0.1+mytime)*60*60*24*0.044; #[kg/kg/day]
+    carbon_productivity_vol=outlet_desorption_molar_amount('CARBON DIOXIDE')/(S_total*L)/(0.1+mytime)*60*60*0.044; #[kg/m3/h]
+
+    $energy_blower=power_blower;
+    $energy_motor=power_motor;
+    E_blower=energy_blower/(1e-6+outlet_desorption_molar_amount('CARBON DIOXIDE'))/1E6/0.044; #[MJ/kg]
+    E_motor=energy_motor/(1e-10+outlet_desorption_molar_amount('CARBON DIOXIDE'))/1E6/0.044; #[MJ/kg]
+    E_steam=efficiency_thermal_to_electric*molecular_weight('WATER')*(enthalpy_steam-enthalpy_water)*inlet_steam_molar_amount('WATER')/(1e-6+outlet_desorption_molar_amount('CARBON DIOXIDE'))/1E6/0.044; #[MJ/kg]
+end
+
+Initial
+mytime=0;
+
+for z:=0|+ to L|- do
+  T_gas(z)=T_ambient;
+  T_sol(z)=T_ambient;
+  C(,z)=p_air/R/T_gas(z)*x_air();
+end #for z
+
+for z:=0 to L do
+  cum_water(z)=0;
+end
+
+for i in nocomp do
+  inlet_air_molar_amount(i)=0;
+  inlet_steam_molar_amount(i)=0;
+  outlet_treated_molar_amount(i)=0;
+  outlet_desorption_molar_amount(i)=0;
+end #for i
+
+energy_blower=0;
+energy_motor=0;
