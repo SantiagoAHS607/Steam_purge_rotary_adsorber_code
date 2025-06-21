@@ -1,0 +1,102 @@
+Parameter
+ns1_1 as real default 7.019
+ns1_2 as real default -0.03164
+ns1_3 as real default 0.0000349473
+b1_1 as real default 0.01715
+b1_2 as real default -4.28e12
+b1_3 as real default 0.90598
+t1_1 as real default 0.24023
+t1_2 as real default 2.53e-78
+t1_3 as real default 30.31602
+ns2_1 as real default 0.00288
+ns2_2 as real default 215.86647
+b2_1 as real default 7.86e55
+b2_2 as real default -22.18586
+t2_1 as real default -2.25834
+t2_2 as real default 0.02772
+t2_3 as real default -5.22e-5
+f1_1 as real default 3.21294
+f1_2 as real default -0.00637
+f1_3 as real default 1.20853
+f2_1 as real default -0.0122
+f2_2 as real default -2.06e-4
+f2_3 as real default -0.07076
+
+Variable
+p_ambient as pressure
+T_ambient as temperature
+RH_ambient as notype
+ns1_ambient as adsorption_capacity
+ns2_ambient as adsorption_capacity
+b1_ambient as notype
+b2_ambient as notype
+t1_ambient as notype
+t2_ambient as notype
+f1_ambient as notype
+f2_ambient as notype
+qe_dry_ambient as adsorption_capacity
+f_ambient as notype
+q_ambient as adsorption_capacity
+
+ns1 as adsorption_capacity
+ns2 as adsorption_capacity
+b1 as notype
+b2 as notype
+t1 as notype
+t2 as notype
+T_sol as temperature
+q as adsorption_capacity
+qe_dry as adsorption_capacity
+qe as adsorption_capacity
+p as pressure
+p_H2O as pressure
+ps as pressure
+RH as relative_humidity
+f1 as notype
+f2 as notype
+f as notype
+k_ads as mass_transfer_coefficient
+k_des as mass_transfer_coefficient
+r as reaction_rate
+
+Equation
+ns1_ambient=ns1_1+ns1_2*T_ambient+ns1_3*T_ambient^2;
+b1_ambient=b1_1-b1_2*b1_3^T_ambient;
+t1_ambient=t1_1+t1_2*T_ambient^t1_3;
+ns2_ambient=ns2_1*(T_ambient-ns2_2);
+b2_ambient=b2_1*T_ambient^b2_2;
+t2_ambient=t2_1+t2_2*T_ambient+t2_3*T_ambient^2;
+f1_ambient=f1_1+f1_2*T_ambient+f1_3*RH_ambient;
+f2_ambient=f2_1+f2_2*T_ambient+f2_3*RH_ambient;
+qe_dry_ambient=ns1_ambient*b1_ambient*p_ambient/100/(1+(b1_ambient*p_ambient/100)^t1_ambient)^(1/t1_ambient)+ns2_ambient*b2_ambient*p_ambient/100/(1+(b2_ambient*p_ambient/100)^t2_ambient)^(1/t2_ambient);
+f_ambient=f1_ambient*(p_ambient/100)^f2_ambient;
+q_ambient=qe_dry_ambient*f_ambient;
+
+ns1=ns1_1+ns1_2*T_sol+ns1_3*T_sol^2;
+b1=b1_1-b1_2*b1_3^T_sol;
+t1=t1_1+t1_2*T_sol^t1_3;
+ns2=ns2_1*(T_sol-ns2_2);
+b2=b2_1*T_sol^b2_2;
+t2=t2_1+t2_2*T_sol+t2_3*T_sol^2;
+qe_dry=ns1*b1*max(p/100,0.01)/(1+(b1*max(p/100,0.01))^t1)^(1/t1)+ns2*b2*max(p/100,0.01)/(1+(b2*max(p/100,0.01))^t2)^(1/t2);
+ps=exp(23.196-3816.44/(T_sol-46.13)); #Antonie correlation
+RH=p_H2O/ps;
+f1=f1_1+f1_2*T_sol+f1_3*RH;
+f2=f2_1+f2_2*T_sol+f2_3*RH;
+f=f1*(max(p/100,0.01))^f2;
+qe=f*qe_dry;
+
+if q>qe then
+r=k_des*(qe-q);
+else
+r=k_ads*(qe-q);
+end # if
+$q=r;
+
+Assign
+k_ads:=0.00143;#0.00142;
+k_des:=0.00665;#0.01432;
+
+Initial
+#q=0;
+q=q_ambient;
